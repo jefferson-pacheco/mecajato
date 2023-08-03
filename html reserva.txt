@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block 'head' %}
+   <link rel="stylesheet" href="{% static 'clientes/css/clientes.css' %}"> 
+{% endblock %}
+
+{% block 'dashboard' %}
+   <div class="container">
+        <div class="row">
+            <div class="col-md card-dashboard">
+                <p class="text-card">Adicionar clientes</p>
+            </div>
+
+            <div class="col-md card-dashboard">
+                <p class="text-card">Atualizar clientes</p>
+            </div>
+
+        </div>
+
+        <div class="adicionar-cliente">
+            <form action="{% url 'clientes' %}" "row" method="POST"> {% csrf_token %}
+                    <div class="col-md">
+                        <p>Nome:</p>
+                        <input type="text" class="form-control" placeholder="Primeiro nome" name="nome">
+                    </div>
+                    <div class="col-md">
+                        <p>Sobrenome:</p>
+                        <input type="text" class="form-control" placeholder="Sobrenome" name="sobrenome">
+                    </div>
+                </div>
+                <br>
+                <p>E-mail:</p>
+                <input type="email" class="form-control" placeholder="nome@email.com" name="email">
+                <br>
+                <p>CPF:</p>
+                <input type="text" class="form-control" placeholder="___.___.___-__" name="cpf">
+                <hr style="background-color:gray;">
+                <div class="add-carros">
+                    <h3>Carros</h3>
+                    <span class="btn-add-carros" onclick="add_carro()">+ Adicionar um carro</span>
+      
+                    <div id="form-carro">
+      
+                    </div>
+      
+                </div>
+      
+                <br>
+                <input type="submit" value="Cadastrar" class="btn-principal">
+      
+            </form>
+            
+        </div>
+
+   </div>
+   <script src="{% static 'clientes/js/clientes.js' %}"></script>
+{% endblock %}
+
+
+
+
+views.py original
+
+
+
+
+
+
+
+from django.shortcuts import render
+from django.http import HttpResponse
+from .models import Cliente, Carro
+import re
+
+def clientes(request):
+    if request.method == "GET":
+       return render(request, 'clientes.html')
+    elif request.method == "POST":
+        nome = request.POST.get('nome')
+        sobrenome = request.POST.get('sobrenome')
+        email = request.POST.get('email')
+        cpf = request.POST.get('cpf')
+        carros = request.POST.getlist('carro')
+        placas = request.POST.getlist('placa')
+        anos = request.POST.getlist('ano')
+
+        cliente = Cliente.objects.filter(cpf=cpf)
+
+        if cliente.exists():
+            return HttpResponse('Cliente ja existe')
+        
+        if not re.fullmatch(r'^([A-Za-z0-9]+[._-])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Za-z]{2,})+$', email):
+
+
+        cliente = Cliente(
+            nome = nome,
+            sobrenome = sobrenome,
+            email = email,
+            cpf = cpf
+        )
+
+        cliente.save()
+
+        for carro, placa, ano in zip(carros, placas, anos):
+            car = Carro(carro=carro, placa=placa, ano=ano, cliente=cliente)
+            car.save()
+
+        
+
+        return HttpResponse('teste')
+
+
+
+clientes.js
+
+
+ document.getElementById('form-att-cliente').style.display = 'block'
+
+        nome = document.getElementById('nome')
+        nome.value = data['nome']
+
+        sobrenome = document.getElementById('sobrenome')
+        sobrenome.value = data['sobrenome']
+
+        email = document.getElementById('email')
+        email.value = data['email']
+
+        cpf = document.getElementById('cpf')
+        cpf.value = data['cpf']
+
+
+
+cliente.js parte de salva e excluir
+
+for(i= 0; i < data['carros'].length; i++){
+            console.log(data['carros'][i]['fields']['carro']);
+
+            div_carros.innerHTML += "<form action='/clientes/update_carro/"+data['carros'][i]['id']+"' method='POST'>\
+                <div class='row'>\
+                    <div class='col-md'>\
+                        <input class='col-md' type='text' name='carro' value='"+data['carros'][i]['fields']['carro']+"'>\
+                    </div>\
+                    <div class='col-md'>\
+                        <input class='col-md' type='text' name='placa' value='"+data['carros'][i]['fields']['placa']+"'>\
+                    </div>\
+                    <div class='col-md'>\
+                        <input class='col-md' type='text' name='ano' value='"+data['carros'][i]['fields']['ano']+"'>\
+                    </div>\              
+                    <div class='col-md'>\
+                        <input class='btn btn-success' type='submit' value='Salvar'>\
+                    </div>\
+                </form>                  
+                <div class='col-md'>\
+                        <a class='btn btn-danger' href='/clientes/excluir_carros/"+ data['carros'][i]['id'] +"'>EXCLUIR</a>\
+                    </div>\
+                </div> <br>"
